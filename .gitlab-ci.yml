@@ -1,0 +1,22 @@
+stages:
+  - build
+  - deploy
+build_artifact:
+  stage: build
+  tags:
+  - shell
+  script:
+  - mvn clean install
+  artifacts:
+    paths: [./target/*.war]
+    expire_in: 1 week
+deploy_to_tomcat:
+  stage: deploy
+  dependencies:
+  - build_artifact
+  tags: 
+  - shell
+  script:
+  - cp ./target/*.war springboot.war 
+  - docker run -d --rm --name springboot-deploy -P -v ${PWD}/springboot.war:/usr/local/tomcat/webapps/springboot.war tomcat:9.0-jre8-alpine
+  - docker ps -f "name=springboot-deploy" --format '{{.Ports}}'
